@@ -240,24 +240,24 @@ export default function AdminForm() {
             className="input text-gray-900 placeholder-gray-400 rounded-full px-2"
             required
           />
-      <div className="relative w-full">
-  <input
-    name="plusCode"
-    placeholder="Co-ordinates"
-    value={form.plusCode}
-    onChange={handleChange}
-    className="input text-gray-900 placeholder-gray-400 rounded-full px-4 pr-10 w-full"
-    required
-  />
-  <button
-    type="button"
-    onClick={getDeviceLocation}
-    className="absolute inset-y-0 right-2 flex items-center px-1 text-blue-600 hover:text-blue-800"
-    title="Use Current Location"
-  >
-    <FaLocationCrosshairs className="w-5 h-5" />
-  </button>
-</div>
+          <div className="relative w-full">
+            <input
+              name="plusCode"
+              placeholder="Co-ordinates"
+              value={form.plusCode}
+              onChange={handleChange}
+              className="input text-gray-900 placeholder-gray-400 rounded-full px-4 pr-10 w-full"
+              required
+            />
+            <button
+              type="button"
+              onClick={getDeviceLocation}
+              className="absolute inset-y-0 right-2 flex items-center px-1 text-blue-600 hover:text-blue-800"
+              title="Use Current Location"
+            >
+              <FaLocationCrosshairs className="w-5 h-5" />
+            </button>
+          </div>
           <label htmlFor="waterLevel">Water Level</label>
           <select
             name="waterLevel"
