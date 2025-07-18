@@ -15,8 +15,12 @@ import {
 } from "firebase/auth";
 import { db, auth, provider } from "../firebase";
 import { FaGoogle } from "react-icons/fa";
-import toast from "react-hot-toast"; // Toast import
+import toast from "react-hot-toast";
+import { FaLocationCrosshairs } from "react-icons/fa6";
 
+const GEOCODE_API_KEY = import.meta.env.VITE_GEOCODE_API_KEY;
+
+// SupplyInfo type
 type SupplyInfo = {
   id: string;
   name: string;
@@ -42,7 +46,7 @@ export default function AdminForm() {
 
   const [supplyList, setSupplyList] = useState<SupplyInfo[]>([]);
   const [selectedId, setSelectedId] = useState<string>("");
-  const [deleteId, setDeleteId] = useState<string | null>(null); // For modal
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (u) => setUser(u));
@@ -147,20 +151,43 @@ export default function AdminForm() {
     setSelectedId("");
   };
 
+  const getDeviceLocation = () => {
+    if (!navigator.geolocation) {
+      toast.error("Geolocation not supported");
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        const coords = `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
+
+        try {
+          const response = await fetch(
+            `https://geocode.maps.co/reverse?lat=${latitude}&lon=${longitude}&api_key=${GEOCODE_API_KEY}`
+          );
+          const data = await response.json();
+
+          setForm((prev) => ({
+            ...prev,
+            plusCode: coords, // or data.display_name if preferred
+          }));
+        } catch (err) {
+          toast.error("Failed to fetch address");
+        }
+      },
+      () => toast.error("Permission denied or location unavailable")
+    );
+  };
+
   if (!user) {
     return (
       <div className="text-center mt-20">
         <button
           onClick={signIn}
-          className="relative inline-flex items-center gap-2 mt-4 text-white
-    bg-purple-600 hover:bg-blue-700 transition duration-300
-    font-medium rounded-xl text-lg px-6 py-3 z-10 overflow-hidden"
+          className="relative inline-flex items-center gap-2 mt-4 text-white bg-purple-600 hover:bg-blue-700 transition duration-300 font-medium rounded-xl text-lg px-6 py-3 z-10 overflow-hidden"
         >
-          <span
-            className="absolute -inset-1 rounded-xl bg-gradient-to-r from-cyan-500 via-teal-400 to-green-500 
-    blur-md animate-pulse z-0"
-          ></span>
-
+          <span className="absolute -inset-1 rounded-xl bg-gradient-to-r from-cyan-500 via-teal-400 to-green-500 blur-md animate-pulse z-0"></span>
           <span className="relative z-10 flex items-center gap-2">
             Sign in with Google <FaGoogle className="text-2xl" />
           </span>
@@ -175,10 +202,7 @@ export default function AdminForm() {
         <span>Hello, {user.displayName?.split(" ")[0]}</span>
         <button
           onClick={logout}
-          className="bg-gradient-to-r from-rose-400 via-rose-500 to-rose-600 
-                hover:bg-gradient-to-br focus:ring-4 focus:outline-none 
-                focus:ring-rose-300 dark:focus:ring-rose-800 shadow-lg 
-                shadow-rose-500/50 dark:shadow-lg dark:shadow-rose-800/80 px-4 py-1 rounded-xl text-white text-sm shadow"
+          className="bg-gradient-to-r from-rose-400 via-rose-500 to-rose-600 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-rose-300 dark:focus:ring-rose-800 shadow-lg shadow-rose-500/50 dark:shadow-lg dark:shadow-rose-800/80 px-4 py-1 rounded-xl text-white text-sm shadow"
         >
           Logout
         </button>
@@ -216,14 +240,24 @@ export default function AdminForm() {
             className="input text-gray-900 placeholder-gray-400 rounded-full px-2"
             required
           />
-          <input
-            name="plusCode"
-            placeholder="Plus Code"
-            value={form.plusCode}
-            onChange={handleChange}
-            className="input text-gray-900 placeholder-gray-400 rounded-full px-2"
-            required
-          />
+      <div className="relative w-full">
+  <input
+    name="plusCode"
+    placeholder="Co-ordinates"
+    value={form.plusCode}
+    onChange={handleChange}
+    className="input text-gray-900 placeholder-gray-400 rounded-full px-4 pr-10 w-full"
+    required
+  />
+  <button
+    type="button"
+    onClick={getDeviceLocation}
+    className="absolute inset-y-0 right-2 flex items-center px-1 text-blue-600 hover:text-blue-800"
+    title="Use Current Location"
+  >
+    <FaLocationCrosshairs className="w-5 h-5" />
+  </button>
+</div>
           <label htmlFor="waterLevel">Water Level</label>
           <select
             name="waterLevel"
@@ -250,10 +284,7 @@ export default function AdminForm() {
         <div className="mt-4 flex gap-2">
           <button
             type="submit"
-            className="text-white bg-gradient-to-r from-cyan-400 via-cyan-500 to-cyan-600 
-            hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-cyan-300 
-            dark:focus:ring-cyan-800 shadow-lg shadow-cyan-500/50 dark:shadow-lg dark:shadow-cyan-800/80 
-            font-medium rounded-lg text-sm px-8 py-2.5 text-center me-2 mb-2"
+            className="text-white bg-gradient-to-r from-cyan-400 via-cyan-500 to-cyan-600 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-cyan-300 dark:focus:ring-cyan-800 shadow-lg shadow-cyan-500/50 dark:shadow-lg dark:shadow-cyan-800/80 font-medium rounded-lg text-sm px-8 py-2.5 text-center me-2 mb-2"
           >
             {selectedId ? "Update" : "Add"}
           </button>
@@ -261,17 +292,13 @@ export default function AdminForm() {
             <button
               type="button"
               onClick={resetForm}
-              className="text-white bg-gradient-to-r from-red-400 via-red-500 to-red-600 
-              hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-red-300 
-              dark:focus:ring-red-800 shadow-lg shadow-red-500/50 dark:shadow-lg dark:shadow-red-800/80 
-              font-medium rounded-lg text-sm px-8 py-2.5 text-center me-2 mb-2"
+              className="text-white bg-gradient-to-r from-red-400 via-red-500 to-red-600 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-red-300 dark:focus:ring-red-800 shadow-lg shadow-red-500/50 dark:shadow-lg dark:shadow-red-800/80 font-medium rounded-lg text-sm px-8 py-2.5 text-center me-2 mb-2"
             >
               Cancel
             </button>
           )}
         </div>
       </form>
-
       <div className="bg-white/20 backdrop-blur-md p-4 rounded-2xl shadow border border-white/30 text-white">
         <h3 className="text-lg font-semibold mb-2">Existing Entries</h3>
         <ul className="space-y-3">
