@@ -61,7 +61,6 @@ VITE_FIREBASE_APP_ID=your_app_id
 ```bash
 npm run dev
 ```
-
     - Open [http://localhost:5173](http://localhost:5173) in your browser.
 
 ## Usage
